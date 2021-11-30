@@ -1,0 +1,31 @@
+# Note: if you modify this file, don't forget to update
+# checksum in .drone.sec with:
+# drone secure --repo google/WebFundamentals --checksum
+clone:
+  depth: 1
+cache:
+  mount:
+    - vendor/bundle
+    - node_modules
+build:
+  image: crhym3/ci-image
+  commands:
+    - eval "$(rbenv init -)"
+    - bundle install --deployment --jobs=3 --retry=3
+    - npm install
+    - gulp build:staging
+deploy:
+  wf:
+    image: crhym3/drone-plugin-wf
+    auth_key: >
+      $$SERVICE_ACCOUNT
+    github_token: $$GITHUB_TOKEN
+    wpt_api_key: $$WPT_API_KEY
+    rig_url: $$RIG_URL
+    rig_secret: $$RIG_SECRET
+    project: web-central
+    server_suffix: -dot-weasel-dot-web-central.appspot.com
+    bucket_suffix: -webcentral-appspot-weasel
+    source: build
+    gzip: [js, css, html, svg]
+    cache_control: public,max-age=300
